@@ -1,0 +1,11 @@
+.env
+.pytest_cache
+optimisation scripts/
+archive/
+logs/
+output/
+config/
+archive/
+
+
+

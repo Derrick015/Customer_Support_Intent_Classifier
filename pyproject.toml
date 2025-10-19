@@ -1,0 +1,71 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "polyvector-classifier"
+version = "0.1.0"
+description = "Polyvector Classifier for multi-collection vector classification"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+authors = [
+  { name = "Derrick Owusu Ofori", email = "derrick.ofori@zoro.co.uk" }
+]
+keywords = ["nlp", "classification", "embeddings", "deeplearning", "machinelearning", "vectorclassification"]
+classifiers = [
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+  "pandas==2.2.2",
+  "numpy==1.26.4",
+  "joblib==1.4.2",
+  "absl-py==2.1.0",
+  "google-cloud-bigquery==3.25.0",
+  "google-cloud-bigquery-storage==2.31.0",
+  "scikit-learn==1.5.1",
+  "tqdm==4.66.4",
+  "google-generativeai==0.8.5",
+  "pandas-gbq==0.23.1",
+  "rank_bm25==0.2.2",
+  "XlsxWriter==3.2.0",
+  "google-genai==1.16.1",
+  "openpyxl==3.1.5",
+  "langchain==1.0.0",
+  "matplotlib==3.10.7",
+  "chromadb==1.2.0",
+  "streamlit==1.50.0"
+]
+
+[project.urls]
+Homepage = "https://github.com/Derrick015/PolyVector-Classifier"
+Repository = "https://github.com/Derrick015/PolyVector-Classifier"
+
+[tool.setuptools]
+packages = ["src"]
+include-package-data = true
+
+[tool.setuptools.package-data]
+src = ["*.py"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.black]
+line-length = 100
+target-version = ["py310", "py311", "py312"]
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+
