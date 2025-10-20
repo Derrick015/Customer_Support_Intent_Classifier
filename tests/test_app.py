@@ -1,7 +1,6 @@
 import types
 import sys
 import pandas as pd
-import pytest
 
 
 # Pre-stub heavy/optional third-party imports used at app import time

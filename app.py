@@ -206,22 +206,19 @@ def main():
 
     st.sidebar.markdown("""
     <div style="margin-bottom: 18px;">
-        <h4 style="color: #0f172a; margin: 0 0 10px 0;">🚀 Use Cases</h4>
+        <h4 style="color: #0f172a; margin: 0 0 10px 0;">Other Use Cases</h4>
         <div style="display: flex; flex-direction: column; gap: 10px;">
-            <div style="padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; border-left: 3px solid #667eea;">
-                <strong style="color: #ffffff;">💬 Customer Support</strong>
-            </div>
             <div style="padding: 12px; background: linear-gradient(135deg, #7f91ee 0%, #8a69c2 100%); border-radius: 10px; border-left: 3px solid #7f91ee;">
-                <strong style="color: #ffffff;">🛡️ Content Moderation</strong>
+                <strong style="color: #ffffff;">Content Moderation</strong>
             </div>
             <div style="padding: 12px; background: linear-gradient(135deg, #99a6f2 0%, #a480c8 100%); border-radius: 10px; border-left: 3px solid #99a6f2;">
-                <strong style="color: #ffffff;">😊 Sentiment Analysis</strong>
+                <strong style="color: #ffffff;">Sentiment Analysis</strong>
             </div>
             <div style="padding: 12px; background: linear-gradient(135deg, #b3bbf6 0%, #bd96cf 100%); border-radius: 10px; border-left: 3px solid #b3bbf6;">
-                <strong style="color: #ffffff;">🛒 Categorisation</strong>
+                <strong style="color: #ffffff;">Product Categorisation</strong>
             </div>
             <div style="padding: 12px; background: linear-gradient(135deg, #cdd0fa 0%, #d1acd6 100%); border-radius: 10px; border-left: 3px solid #cdd0fa;">
-                <strong style="color: #ffffff;">✨ Many Others</strong>
+                <strong style="color: #ffffff;">Many Others</strong>
             </div>
         </div>
     </div>
@@ -336,17 +333,152 @@ def main():
         if not query.strip():
             st.warning("⚠️ Please enter a query to classify.")
         else:
-            with st.spinner("🔍 Analyzing query..."):
+            with st.spinner("🔍 Analysing query..."):
                 try:
                     prediction = classify_query(query, client, collections)
                     
                     st.markdown("---")
-                    st.markdown("### Classification Results")
                     
-                    # Display prediction
+                    # Category-specific styling
+                    category_styles = {
+                        'Cancel Order': {
+                            'gradient': 'linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)',
+                            'icon': '📦',
+                            'shadow': 'rgba(255, 107, 107, 0.4)',
+                            'accent': '#ff6b6b'
+                        },
+                        'Refund Request': {
+                            'gradient': 'linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%)',
+                            'icon': '💰',
+                            'shadow': 'rgba(78, 205, 196, 0.4)',
+                            'accent': '#4ecdc4'
+                        },
+                        'Technical Issue': {
+                            'gradient': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                            'icon': '🔧',
+                            'shadow': 'rgba(102, 126, 234, 0.4)',
+                            'accent': '#667eea'
+                        },
+                        'Track Order': {
+                            'gradient': 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                            'icon': '📍',
+                            'shadow': 'rgba(240, 147, 251, 0.4)',
+                            'accent': '#f093fb'
+                        }
+                    }
+                    
+                    style = category_styles.get(prediction, category_styles['Technical Issue'])
+                    
+                    # Display animated prediction card
                     st.markdown(f"""
-                    <div style="padding: 20px; background-color: #f0f9ff; border-radius: 10px; border-left: 5px solid #2c7be5;">
-                        <h2 style="margin: 0; color: #1e40af;">Predicted Category: {prediction}</h2>
+                    <style>
+                    @keyframes slideInScale {{
+                        0% {{
+                            opacity: 0;
+                            transform: translateY(-30px) scale(0.9);
+                        }}
+                        100% {{
+                            opacity: 1;
+                            transform: translateY(0) scale(1);
+                        }}
+                    }}
+                    
+                    @keyframes pulse {{
+                        0%, 100% {{
+                            transform: scale(1);
+                        }}
+                        50% {{
+                            transform: scale(1.05);
+                        }}
+                    }}
+                    
+                    @keyframes shimmer {{
+                        0% {{
+                            background-position: -1000px 0;
+                        }}
+                        100% {{
+                            background-position: 1000px 0;
+                        }}
+                    }}
+                    
+                    .prediction-card {{
+                        background: {style['gradient']};
+                        padding: 40px;
+                        border-radius: 20px;
+                        box-shadow: 0 20px 60px {style['shadow']};
+                        animation: slideInScale 0.6s ease-out;
+                        position: relative;
+                        overflow: hidden;
+                        margin: 30px 0;
+                    }}
+                    
+                    .prediction-card::before {{
+                        content: '';
+                        position: absolute;
+                        top: -50%;
+                        left: -50%;
+                        width: 200%;
+                        height: 200%;
+                        background: linear-gradient(
+                            45deg,
+                            transparent,
+                            rgba(255, 255, 255, 0.1),
+                            transparent
+                        );
+                        animation: shimmer 3s infinite;
+                    }}
+                    
+                    .prediction-content {{
+                        position: relative;
+                        z-index: 1;
+                        text-align: center;
+                    }}
+                    
+                    .prediction-icon {{
+                        font-size: 80px;
+                        animation: pulse 2s ease-in-out infinite;
+                        display: block;
+                        margin-bottom: 20px;
+                    }}
+                    
+                    .prediction-label {{
+                        color: rgba(255, 255, 255, 0.9);
+                        font-size: 18px;
+                        font-weight: 500;
+                        letter-spacing: 2px;
+                        text-transform: uppercase;
+                        margin-bottom: 12px;
+                    }}
+                    
+                    .prediction-text {{
+                        color: #ffffff;
+                        font-size: 42px;
+                        font-weight: 800;
+                        margin: 0;
+                        text-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+                        letter-spacing: 1px;
+                    }}
+                    
+                    .confidence-badge {{
+                        display: inline-block;
+                        background: rgba(255, 255, 255, 0.25);
+                        backdrop-filter: blur(10px);
+                        padding: 12px 28px;
+                        border-radius: 50px;
+                        color: #ffffff;
+                        font-weight: 600;
+                        font-size: 16px;
+                        margin-top: 20px;
+                        border: 2px solid rgba(255, 255, 255, 0.3);
+                    }}
+                    </style>
+                    
+                    <div class="prediction-card">
+                        <div class="prediction-content">
+                            <span class="prediction-icon">{style['icon']}</span>
+                            <div class="prediction-label">Predicted Category</div>
+                            <h1 class="prediction-text">{prediction}</h1>
+                        </div>
                     </div>
                     """, unsafe_allow_html=True)
                     
@@ -355,6 +487,7 @@ def main():
                     # 
                     # # Display visualization
                     # st.plotly_chart(fig, use_container_width=True)
+#                             <div class="confidence-badge">✨ Classification Complete</div>
                 
                 except Exception as e:
                     st.error(f"❌ {str(e)}")
