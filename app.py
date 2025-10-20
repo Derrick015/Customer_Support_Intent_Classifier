@@ -129,34 +129,115 @@ def classify_query(query, client, collections):
             )
         
         # Get confidence visualization
-        primary_color = st.get_option('theme.primaryColor') or '#2c7be5'
-        fig, plot_df = plot_selected_collection_top5_plotly(
-            df_one_row=df_selected,
-            normalization='softmax',  # Use softmax so percentages add up to 100%
-            top_n=5,
-            percent_fmt=True,
-            title=" ",  # Remove the chart title (use space to override default)
-            color=primary_color
-        )
+        # primary_color = st.get_option('theme.primaryColor') or '#2c7be5'
+        # fig, plot_df = plot_selected_collection_top5_plotly(
+        #     df_one_row=df_selected,
+        #     normalization='softmax',  # Use softmax so percentages add up to 100%
+        #     top_n=5,
+        #     percent_fmt=True,
+        #     title=" ",  # Remove the chart title (use space to override default)
+        #     color=primary_color
+        # )
         
-        # Remove any title from the figure
-        fig.update_layout(title="")
+        # # Remove any title from the figure
+        # fig.update_layout(title="")
         
-        return final_prediction, fig, df_selected
+        # return final_prediction, fig, df_selected
+        return final_prediction
     
     except Exception as e:
         raise Exception(f"Classification failed: {str(e)}")
 
 # Main app
 def main():
-    st.title("🎯 PolyVector Customer Intent Classifier")
-    st.markdown("""
-    This demo showcases PolyVector's semantic classification capabilities for customer service queries.
-    Enter a customer query to see the predicted intent category with confidence scores.
-    """)
+    st.title("🎧📦 Customer Support Intent Classifier")
     
+    # Message section
+    st.markdown("""
+    <div style="
+        padding: 16px 20px; 
+        background: linear-gradient(to right, #f0f4ff, #ffffff); 
+        border-radius: 12px; 
+        border-left: 4px solid #667eea;
+        margin-bottom: 24px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    ">
+        <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #334155;">
+            <strong style="color: #4f46e5;">In this demo,</strong> we classify customer support 
+            queries into one of these intents; <strong>Cancel Order</strong>, 
+            <strong>Refund Request</strong>, <strong>Technical Issue</strong>, and 
+            <strong>Track Order</strong>, to automatically route requests, trigger the right 
+            workflows, and shorten resolution times
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Sidebar — styled and informative
+    st.sidebar.markdown("""
+    <div style="
+        padding: 20px; 
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+        border-radius: 16px; 
+        margin-bottom: 18px;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+    ">
+        <h2 style="color: white; margin: 0; text-align: center; font-weight: 700; letter-spacing: .3px;">
+            About This App
+        </h2>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.sidebar.markdown("""
+    <div style="
+        padding: 16px; 
+        background: linear-gradient(to right, #f8fafc, #ffffff); 
+        border-radius: 12px; 
+        border-left: 4px solid #667eea;
+        margin-bottom: 18px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    ">
+        <p style="margin: 0; font-size: 14px; line-height: 1.7; color: #334155;">
+            The underlying model used by this app is the <strong style="color: #4f46e5;">Poly Collections Classifier</strong>.  It uses
+            embeddings to integrate <strong>multimodal inputs</strong> (text, images, audio, video) in a modular fashion
+            for flexible, scalable and accurate classification
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.sidebar.markdown("""
+    <div style="margin-bottom: 18px;">
+        <h4 style="color: #0f172a; margin: 0 0 10px 0;">🚀 Use Cases</h4>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div style="padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; border-left: 3px solid #667eea;">
+                <strong style="color: #ffffff;">💬 Customer Support</strong>
+            </div>
+            <div style="padding: 12px; background: linear-gradient(135deg, #7f91ee 0%, #8a69c2 100%); border-radius: 10px; border-left: 3px solid #7f91ee;">
+                <strong style="color: #ffffff;">🛡️ Content Moderation</strong>
+            </div>
+            <div style="padding: 12px; background: linear-gradient(135deg, #99a6f2 0%, #a480c8 100%); border-radius: 10px; border-left: 3px solid #99a6f2;">
+                <strong style="color: #ffffff;">😊 Sentiment Analysis</strong>
+            </div>
+            <div style="padding: 12px; background: linear-gradient(135deg, #b3bbf6 0%, #bd96cf 100%); border-radius: 10px; border-left: 3px solid #b3bbf6;">
+                <strong style="color: #ffffff;">🛒 Categorisation</strong>
+            </div>
+            <div style="padding: 12px; background: linear-gradient(135deg, #cdd0fa 0%, #d1acd6 100%); border-radius: 10px; border-left: 3px solid #cdd0fa;">
+                <strong style="color: #ffffff;">✨ Many Others</strong>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+
+    with st.sidebar.expander("⚙️ How It Works", expanded=False):
+        st.markdown("""
+        1. Type in your query based on the provided categories
+        2. Click the "Classify" button
+        3. The app will classify your query into one of the provided categories
+        4. Visualise the confidence distribution of the classification
+        """)
+
     # Display available output categories
-    st.markdown("### Available Intent Categories")
+    st.markdown("### Available Categories")
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         st.info("📦 **Cancel Order**")
@@ -205,19 +286,19 @@ def main():
     
     # st.success(f"✅ Models loaded successfully! ({len(df_intent)} intent vectors, {len(df_sample)} sample vectors)")
     
-    # Query input
-    st.markdown("### Enter Customer Query")
+    # # Query input
+    # st.markdown("### Enter Customer Query")
     
-    # Example queries
-    with st.expander("💡 Click to see example queries"):
-        st.markdown("""
-        - "help my order has still not arrived what is going on"
-        - "I want to cancel my recent order"
-        - "I need a refund for my purchase"
-        - "The website is not loading properly"
-        - "Where is my package?"
-        - "Can you help me return this item?"
-        """)
+    # # Example queries
+    # with st.expander("💡 Click to see example queries"):
+    #     st.markdown("""
+    #     - "help my order has still not arrived what is going on"
+    #     - "I want to cancel my recent order"
+    #     - "I need a refund for my purchase"
+    #     - "The website is not loading properly"
+    #     - "Where is my package?"
+    #     - "Can you help me return this item?"
+    #     """)
     
     query = st.text_area(
         "Type your query here:",
@@ -227,6 +308,27 @@ def main():
     
     col_btn1, col_btn2 = st.columns([1, 5])
     with col_btn1:
+        st.markdown("""
+        <style>
+        /* Strongest purple gradient for the Classify button */
+        div[data-testid="stButton"] > button[kind="primary"] {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            color: #ffffff !important;
+            border: 0 !important;
+            border-radius: 8px !important;
+            box-shadow: 0 6px 14px rgba(102, 126, 234, 0.35) !important;
+            font-weight: 600 !important;
+        }
+        div[data-testid="stButton"] > button[kind="primary"]:hover {
+            background: linear-gradient(135deg, #7585ec 0%, #8459ae 100%) !important;
+            box-shadow: 0 10px 22px rgba(118, 75, 162, 0.50) !important;
+            transform: translateY(-1px);
+        }
+        div[data-testid="stButton"] > button[kind="primary"]:active {
+            transform: translateY(1px);
+        }
+        </style>
+        """, unsafe_allow_html=True)
         classify_button = st.button("🚀 Classify", type="primary", use_container_width=True)
     
     # Classify on button click
@@ -236,23 +338,23 @@ def main():
         else:
             with st.spinner("🔍 Analyzing query..."):
                 try:
-                    prediction, fig, df_selected = classify_query(query, client, collections)
+                    prediction = classify_query(query, client, collections)
                     
                     st.markdown("---")
-                    st.markdown("### 📊 Classification Results")
+                    st.markdown("### Classification Results")
                     
                     # Display prediction
                     st.markdown(f"""
                     <div style="padding: 20px; background-color: #f0f9ff; border-radius: 10px; border-left: 5px solid #2c7be5;">
-                        <h2 style="margin: 0; color: #1e40af;">Predicted Intent: {prediction}</h2>
+                        <h2 style="margin: 0; color: #1e40af;">Predicted Category: {prediction}</h2>
                     </div>
                     """, unsafe_allow_html=True)
                     
-                    st.markdown("### 📈 Confidence Distribution")
-                    st.markdown("The chart below shows the confidence scores across different intent categories:")
-                    
-                    # Display visualization
-                    st.plotly_chart(fig, use_container_width=True)
+                    # st.markdown("### Confidence Distribution")
+                    # st.markdown("The chart below shows the confidence scores across different categories:")
+                    # 
+                    # # Display visualization
+                    # st.plotly_chart(fig, use_container_width=True)
                 
                 except Exception as e:
                     st.error(f"❌ {str(e)}")
