@@ -25,14 +25,6 @@ try:
 except ImportError:
     plt = None
 
-bigquery_client = bigquery.Client(project='deron-innovations')
-bqstorage_client = BigQueryReadClient()
-project = "deron-innovations"
-location = "us-central1"
-client = genai.Client(vertexai=True, project=project, location=location) 
-
-
-
 
 def add_gemini_embeddings(
     df,
@@ -42,7 +34,7 @@ def add_gemini_embeddings(
     embedding_column="embedding",
     batch_size=1,
     max_workers=8,
-    client=client
+    client=None
 ):
     """
     Adds Gemini embeddings to a DataFrame column using the Google Gemini API.
@@ -62,8 +54,9 @@ def add_gemini_embeddings(
     Note: 
         Set batch size to 1 for gemini-embedding-001 as they only support 1 instance per request - 22-05-2025. For others you can go up to 250
     """
-
-
+    
+    if client is None:
+        raise ValueError("client parameter is required")
 
     def embed_batch(batch):
         response = client.models.embed_content(

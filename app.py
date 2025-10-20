@@ -8,8 +8,8 @@ import os
 
 # Page configuration
 st.set_page_config(
-    page_title="Poly Collections Classifier",
-    page_icon="🎯",
+    page_title="Customer Support Intent Classifier",
+    page_icon="🎧",
     layout="wide"
 )
 
@@ -198,7 +198,7 @@ def main():
     ">
         <p style="margin: 0; font-size: 14px; line-height: 1.7; color: #334155;">
             The underlying model used by this app is the <strong style="color: #4f46e5;">Poly Collections Classifier</strong>.  It uses
-            embeddings to integrate <strong>multimodal inputs</strong> (text, images, audio, video) in a modular fashion
+            embeddings to integrate <strong>multimodal inputs</strong> (text and images) in a modular fashion
             for flexible, scalable and accurate classification
         </p>
     </div>
@@ -247,41 +247,65 @@ def main():
     
     # st.markdown("---")
     
-    # Load collections
-    with st.spinner("Loading classification models..."):
-        df_intent, df_sample = load_collections()
+    # Initialize session state for async loading
+    if 'collections_loaded' not in st.session_state:
+        st.session_state.collections_loaded = False
+        st.session_state.collections_loading = False
+        st.session_state.df_intent = None
+        st.session_state.df_sample = None
+        st.session_state.collections = None
+        st.session_state.client = None
     
-    if df_intent is None or df_sample is None:
-        st.error("Failed to load collections. Please check the emb_collection directory.")
-        return
+    # Start loading collections in background (non-blocking)
+    if not st.session_state.collections_loaded and not st.session_state.collections_loading:
+        st.session_state.collections_loading = True
+        
+        # Load collections asynchronously
+        try:
+            df_intent, df_sample = load_collections()
+            
+            if df_intent is not None and df_sample is not None:
+                st.session_state.df_intent = df_intent
+                st.session_state.df_sample = df_sample
+                
+                # Prepare collections for processing
+                st.session_state.collections = [
+                    {
+                        'name': 'intent_meaning_collection',
+                        'df': df_intent,
+                        'output_col': 'output',
+                        'embedding_col': 'embedding',
+                        'document_col': 'document'
+                    },
+                    {
+                        'name': 'sample_avg_embeddings_collection',
+                        'df': df_sample,
+                        'output_col': 'output',
+                        'embedding_col': 'embedding',
+                        'document_col': 'document'
+                    }
+                ]
+                
+                st.session_state.collections_loaded = True
+        except Exception as e:
+            st.error(f"❌ Error loading collections: {e}")
+            st.session_state.collections_loading = False
     
-    # Initialize client
-    try:
-        client = get_genai_client()
-    except Exception as e:
-        st.error(f"❌ Failed to initialize Google GenAI client: {e}")
-        st.info("Please ensure your Google Cloud credentials are properly configured.")
-        return
+    # Initialize client (lightweight operation)
+    if st.session_state.client is None:
+        try:
+            st.session_state.client = get_genai_client()
+        except Exception as e:
+            st.error(f"❌ Failed to initialize Google GenAI client: {e}")
+            st.info("Please ensure your Google Cloud credentials are properly configured.")
+            return
     
-    # Prepare collections for processing
-    collections = [
-        {
-            'name': 'intent_meaning_collection',
-            'df': df_intent,
-            'output_col': 'output',
-            'embedding_col': 'embedding',
-            'document_col': 'document'
-        },
-        {
-            'name': 'sample_avg_embeddings_collection',
-            'df': df_sample,
-            'output_col': 'output',
-            'embedding_col': 'embedding',
-            'document_col': 'document'
-        }
-    ]
-    
-    # st.success(f"✅ Models loaded successfully! ({len(df_intent)} intent vectors, {len(df_sample)} sample vectors)")
+    # Show subtle loading indicator only if still loading
+    if st.session_state.collections_loading and not st.session_state.collections_loaded:
+        with st.container():
+            col_load1, col_load2, col_load3 = st.columns([1, 2, 1])
+            with col_load2:
+                st.info("⏳ Loading models in the background... Feel free to type your query!")
     
     # # Query input
     # st.markdown("### Enter Customer Query")
@@ -332,10 +356,12 @@ def main():
     if classify_button:
         if not query.strip():
             st.warning("⚠️ Please enter a query to classify.")
+        elif not st.session_state.collections_loaded:
+            st.warning("⏳ Please wait while models are loading. This will only take a moment on first use.")
         else:
             with st.spinner("🔍 Analysing query..."):
                 try:
-                    prediction = classify_query(query, client, collections)
+                    prediction = classify_query(query, st.session_state.client, st.session_state.collections)
                     
                     st.markdown("---")
                     
