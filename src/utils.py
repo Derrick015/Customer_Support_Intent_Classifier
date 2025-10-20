@@ -7,7 +7,6 @@ import pandas as pd
 import pandas_gbq
 from sklearn.metrics.pairwise import cosine_similarity
 import re
-import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 import numpy as np
