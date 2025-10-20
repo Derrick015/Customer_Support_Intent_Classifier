@@ -1,13 +1,12 @@
 # Customer Support Intent Classifier
 
-A sophisticated customer support intent classification system that uses multimodal embeddings and vector similarity to automatically route customer queries into predefined categories. Built with Streamlit and powered by Google's Gemini AI embeddings.
+A sophisticated customer support intent classification system powered by the novel PolyCollections Classification Algorithm I developed, which leverages multimodal embeddings and vector similarity to automatically route customer queries into predefined categories. Built with Streamlit and powered by Google’s Gemini AI embeddings.
 
 ## Features
 
 - **Multi-Collection Classification**: Uses multiple vector collections for robust intent detection
 - **Real-time Classification**: Instant classification of customer support queries
 - **Beautiful UI**: Modern, responsive interface with animated results
-- **Confidence Visualization**: Visual representation of classification confidence
 - **Docker Support**: Easy deployment with containerization
 - **Google Cloud Integration**: Leverages Google Gemini AI for embeddings
 
@@ -32,8 +31,8 @@ The system classifies customer queries into four main categories:
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/Derrick015/PolyVector-Classifier.git
-   cd PolyVector-Classifier
+   git clone https://github.com/Derrick015/Customer_Support_Intent_Classifier
+   cd Customer_Support_Intent_Classifier
    ```
 
 2. **Install dependencies**
@@ -63,21 +62,23 @@ The application will be available at `http://localhost:8501`
 
 ```bash
 # Build the Docker image
-docker build -t poly-collections-classifier .
+
+
+docker build -t customer-support-intent-classifier .
 
 # Run the container
-docker run -p 8080:8080 poly-collections-classifier
+docker run -p 8080:8080 customer-support-intent-classifier
 ```
 
 ### Deploy to Google Cloud Run
 
 ```bash
 # Build and push to Google Container Registry
-gcloud builds submit --tag gcr.io/PROJECT_ID/poly-collections-classifier
+gcloud builds submit --tag gcr.io/PROJECT_ID/customer-support-intent-classifier
 
 # Deploy to Cloud Run
-gcloud run deploy poly-collections-classifier \
-  --image gcr.io/PROJECT_ID/poly-collections-classifier \
+gcloud run deploy customer-support-intent-classifier \
+  --image gcr.io/PROJECT_ID/customer-support-intent-classifier \
   --platform managed \
   --region us-central1 \
   --allow-unauthenticated
@@ -143,15 +144,6 @@ STREAMLIT_SERVER_HEADLESS=true
 STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
 ```
 
-### Model Configuration
-
-The system uses the following default configurations:
-
-- **Embedding Model**: `gemini-embedding-001`
-- **Task Type**: `RETRIEVAL_QUERY`
-- **Top N Results**: 5
-- **Normalization**: L1 normalization
-- **Batch Size**: 1 (Gemini API limitation)
 
 ## Project Structure
 
@@ -186,7 +178,7 @@ python -m pytest tests/
 - **Classification Speed**: ~1-2 seconds per query
 - **Accuracy**: High accuracy on customer support intent classification
 - **Scalability**: Supports batch processing for multiple queries
-- **Memory Usage**: Optimized for efficient vector operations
+- **Memory Usage**: Optimised for efficient vector operations
 
 ## Security
 
@@ -218,10 +210,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Streamlit team for the excellent web framework
 - ChromaDB for efficient vector storage and retrieval
 - The open-source community for various supporting libraries
-
-## Support
-
-For support, email derrick.ofori@zoro.co.uk or create an issue in the GitHub repository.
 
 ---
 

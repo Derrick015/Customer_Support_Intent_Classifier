@@ -3,14 +3,14 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "polyvector-classifier"
+name = "customer-support-intent-classifier"
 version = "0.1.0"
-description = "Polyvector Classifier for multi-collection vector classification"
+description = "Customer Support Intent Classifier for multi-collection vector classification"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { file = "LICENSE" }
 authors = [
-  { name = "Derrick Owusu Ofori", email = "derrick.ofori@zoro.co.uk" }
+  { name = "Derrick Owusu Ofori", email = "mrderrick.of@gmail.com" }
 ]
 keywords = ["nlp", "classification", "embeddings", "deeplearning", "machinelearning", "vectorclassification"]
 classifiers = [
