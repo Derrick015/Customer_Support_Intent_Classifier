@@ -350,7 +350,7 @@ def main():
         }
         </style>
         """, unsafe_allow_html=True)
-        classify_button = st.button("🚀 Classify", type="primary", use_container_width=True)
+        classify_button = st.button("Classify", type="primary", use_container_width=True)
     
     # Classify on button click
     if classify_button:
