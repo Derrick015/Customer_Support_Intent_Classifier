@@ -1,3 +1,9 @@
+
+
+
+https://github.com/user-attachments/assets/3e05be9e-98d8-4533-b353-b79a3d7e1a79
+
+
 # Customer Support Intent Classifier
 
 A sophisticated customer support intent classification system powered by the novel PolyCollections Classification Algorithm I developed, which leverages multimodal embeddings and vector similarity to automatically route customer queries into predefined categories. Built with Streamlit and powered by Google’s Gemini AI embeddings.
