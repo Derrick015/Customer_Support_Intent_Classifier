@@ -1,9 +1,6 @@
 import streamlit as st
-import pandas as pd
-from chromadb import PersistentClient
 from google import genai
 from google.genai.types import EmbedContentConfig
-from src.utils import process_similarity_single_query, select_best_output_across_collections, plot_selected_collection_top5_plotly
 import os
 
 # Page configuration
@@ -17,6 +14,8 @@ st.set_page_config(
 @st.cache_resource
 def get_genai_client():
     """Initialize and cache the Google GenAI client."""
+    
+
     project = "deron-innovations"
     location = "us-central1"
     client = genai.Client(vertexai=True, project=project, location=location)
@@ -26,6 +25,9 @@ def get_genai_client():
 def load_collections():
     """Load ChromaDB collections and convert to DataFrames."""
     try:
+        import pandas as pd
+        from chromadb import PersistentClient
+
         CHROMA_PATH = "emb_collection"
         
         if not os.path.exists(CHROMA_PATH):
@@ -87,28 +89,63 @@ def embed_single_query(input_text, client):
     )
     return [e.values for e in response.embeddings]
 
+def warm_up_embeddings(client):
+    """
+    Warm up the embedding API with a dummy call to reduce first-query latency.
+    First API call often has ~4-5s cold start, subsequent calls are ~0.8s.
+    """
+    import time
+    try:
+        t0 = time.perf_counter()
+        _ = embed_single_query("test query for warming up the API", client)
+        t1 = time.perf_counter()
+        print(f"✅ Embeddings warmed up in {t1-t0:.3f}s")
+    except Exception as e:
+        print(f"⚠️ Embedding warm-up failed (non-critical): {e}")
+
 def classify_query(query, client, collections):
     """Classify a customer query and return the prediction with details."""
+    import time
+    from src.utils import (
+        process_similarity_single_query,
+        select_best_output_across_collections,
+    )
+
     try:
         # Embed the query
+        t0 = time.perf_counter()
         query_emb = embed_single_query(query, client)
+        t1 = time.perf_counter()
+        print(f" Embedding time: {t1-t0:.3f}s")
         
         # Process similarity
+        t2 = time.perf_counter()
         single_result = process_similarity_single_query(
             query_embedding=query_emb,
             collections=collections,
             top_n=5
         )
+        t3 = time.perf_counter()
+        print(f" Similarity processing time: {t3-t2:.3f}s")
         
         # Select best output
+        t4 = time.perf_counter()
+        print(f"single_result shape: {single_result.shape}, columns: {len(single_result.columns)}")
+        print(f"single_result memory usage: {single_result.memory_usage(deep=True).sum() / 1024 / 1024:.2f} MB")
+        
         df_selected = select_best_output_across_collections(
             df=single_result,
             collections=collections,
             criterion='total',
             normalization='l1'
         )
+        t5 = time.perf_counter()
+        print(f" Output selection time: {t5-t4:.3f}s")
+        print(f" Total classification time: {t5-t0:.3f}s")
+        print(f"df_selected shape: {df_selected.shape}, columns: {len(df_selected.columns)}")
         
         # Map to clean labels
+        t6 = time.perf_counter()
         output_mapping = {
             'cancel_order': 'Cancel Order',
             'refund_request': 'Refund Request',
@@ -118,8 +155,11 @@ def classify_query(query, client, collections):
         
         df_selected['selected_output_clean'] = df_selected['selected_output'].map(output_mapping)
         final_prediction = df_selected['selected_output_clean'].iloc[0]
+        t7 = time.perf_counter()
+        print(f" Label mapping and extraction: {t7-t6:.3f}s")
         
         # Map all collection output columns to clean labels for visualization
+        t8 = time.perf_counter()
         selected_collection = df_selected['selected_collection'].iloc[0]
         output_col = f"{selected_collection}_top5_output"
         if output_col in df_selected.columns:
@@ -127,22 +167,10 @@ def classify_query(query, client, collections):
             df_selected[output_col] = df_selected[output_col].apply(
                 lambda outputs: [output_mapping.get(o, o) for o in outputs] if isinstance(outputs, list) else outputs
             )
-        
-        # Get confidence visualization
-        # primary_color = st.get_option('theme.primaryColor') or '#2c7be5'
-        # fig, plot_df = plot_selected_collection_top5_plotly(
-        #     df_one_row=df_selected,
-        #     normalization='softmax',  # Use softmax so percentages add up to 100%
-        #     top_n=5,
-        #     percent_fmt=True,
-        #     title=" ",  # Remove the chart title (use space to override default)
-        #     color=primary_color
-        # )
-        
-        # # Remove any title from the figure
-        # fig.update_layout(title="")
-        
-        # return final_prediction, fig, df_selected
+        t9 = time.perf_counter()
+        print(f" Collection output mapping: {t9-t8:.3f}s")
+        print(f" classify_query() internal total: {t9-t0:.3f}s")
+
         return final_prediction
     
     except Exception as e:
@@ -255,6 +283,7 @@ def main():
         st.session_state.df_sample = None
         st.session_state.collections = None
         st.session_state.client = None
+        st.session_state.embeddings_warmed_up = False
     
     # Start loading collections in background (non-blocking)
     if not st.session_state.collections_loaded and not st.session_state.collections_loading:
@@ -291,14 +320,21 @@ def main():
             st.error(f"❌ Error loading collections: {e}")
             st.session_state.collections_loading = False
     
-    # Initialize client (lightweight operation)
+    # Initialize GenAI client (may take ~1s on first load due to Google SDK imports)
     if st.session_state.client is None:
         try:
-            st.session_state.client = get_genai_client()
+            with st.spinner("🔧 Initializing AI model... (first-time setup)"):
+                st.session_state.client = get_genai_client()
         except Exception as e:
             st.error(f"❌ Failed to initialize Google GenAI client: {e}")
             st.info("Please ensure your Google Cloud credentials are properly configured.")
             return
+    
+    # Warm up embeddings to reduce first-query latency (from ~4.7s to ~0.8s)
+    if st.session_state.client is not None and not st.session_state.embeddings_warmed_up:
+        with st.spinner("🔥 Warming up embeddings... (first-time optimization)"):
+            warm_up_embeddings(st.session_state.client)
+            st.session_state.embeddings_warmed_up = True
     
     # Show subtle loading indicator only if still loading
     if st.session_state.collections_loading and not st.session_state.collections_loaded:
@@ -307,19 +343,7 @@ def main():
             with col_load2:
                 st.info("⏳ Loading models in the background... Feel free to type your query!")
     
-    # # Query input
-    # st.markdown("### Enter Customer Query")
-    
-    # # Example queries
-    # with st.expander("💡 Click to see example queries"):
-    #     st.markdown("""
-    #     - "help my order has still not arrived what is going on"
-    #     - "I want to cancel my recent order"
-    #     - "I need a refund for my purchase"
-    #     - "The website is not loading properly"
-    #     - "Where is my package?"
-    #     - "Can you help me return this item?"
-    #     """)
+
     
     query = st.text_area(
         "Type your query here:",
@@ -359,11 +383,21 @@ def main():
         elif not st.session_state.collections_loaded:
             st.warning("⏳ Please wait while models are loading. This will only take a moment on first use.")
         else:
+            import time
+            t_button_click = time.perf_counter()
             with st.spinner("🔍 Analysing query..."):
                 try:
+                    t_start = time.perf_counter()
+                    print(f"\n{'='*60}")
+                    print(f" Button click handling started")
+                    print(f"{'='*60}")
                     prediction = classify_query(query, st.session_state.client, st.session_state.collections)
+                    t_classify_done = time.perf_counter()
+                    print(f" classify_query() completed: {t_classify_done - t_start:.3f}s")
                     
                     st.markdown("---")
+                    t_markdown = time.perf_counter()
+                    print(f" First markdown rendered: {t_markdown - t_classify_done:.3f}s")
                     
                     # Category-specific styling
                     category_styles = {
@@ -394,6 +428,8 @@ def main():
                     }
                     
                     style = category_styles.get(prediction, category_styles['Technical Issue'])
+                    t_style_setup = time.perf_counter()
+                    print(f" Style setup: {t_style_setup - t_markdown:.3f}s")
                     
                     # Display animated prediction card
                     st.markdown(f"""
@@ -507,14 +543,12 @@ def main():
                         </div>
                     </div>
                     """, unsafe_allow_html=True)
+                    t_html_done = time.perf_counter()
+                    print(f" HTML card rendering: {t_html_done - t_style_setup:.3f}s")
+                    print(f"{'='*60}")
+                    print(f" TOTAL processing time: {t_html_done - t_start:.3f}s")
+                    print(f"{'='*60}\n")
                     
-                    # st.markdown("### Confidence Distribution")
-                    # st.markdown("The chart below shows the confidence scores across different categories:")
-                    # 
-                    # # Display visualization
-                    # st.plotly_chart(fig, use_container_width=True)
-#                             <div class="confidence-badge">✨ Classification Complete</div>
-                
                 except Exception as e:
                     st.error(f"❌ {str(e)}")
                     st.info("Please try again or contact support if the issue persists.")

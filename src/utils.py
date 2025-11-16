@@ -1,22 +1,12 @@
 import concurrent.futures
-from google import genai
-from google.cloud import bigquery
-from google.genai.types import EmbedContentConfig
-from datetime import datetime
 import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
-import re
+
 import numpy as np
-from collections import defaultdict
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
-import numpy as np
-from sklearn.cluster import AgglomerativeClustering
 from sklearn.preprocessing import normalize, MinMaxScaler, StandardScaler
 import logging
-import numpy as np
 from tqdm import tqdm
-from google.cloud.bigquery_storage import BigQueryReadClient
 import time
 import ast
 
@@ -54,7 +44,8 @@ def add_gemini_embeddings(
     Note: 
         Set batch size to 1 for gemini-embedding-001 as they only support 1 instance per request - 22-05-2025. For others you can go up to 250
     """
-    
+    from google.genai.types import EmbedContentConfig
+
     if client is None:
         raise ValueError("client parameter is required")
 
@@ -584,7 +575,10 @@ def select_best_output_across_collections(
     Returns:
         pd.DataFrame: Copy of df with two additional columns: selected output and collection used.
     """
+    t_copy_start = time.perf_counter()
     df_out = df.copy()
+    t_copy_done = time.perf_counter()
+    print(f" [utils] df.copy() time: {t_copy_done - t_copy_start:.3f}s")
 
     # Prepare column name resolver that infers top-N from df columns for each collection
     topn_regex_cache = {}
@@ -630,6 +624,7 @@ def select_best_output_across_collections(
     if criterion == 'marginal_diff':
         criterion = 'max_top1_margin'
 
+    t_iter_start = time.perf_counter()
     for _, row in df_out.iterrows():
         if criterion == 'max_top1_margin':
             best_name = None
@@ -704,8 +699,14 @@ def select_best_output_across_collections(
         selected_outputs.append(best_id)
         selected_collections.append(best_collection)
 
+    t_iter_done = time.perf_counter()
+    print(f" [utils] iterrows() loop time: {t_iter_done - t_iter_start:.3f}s")
+    
+    t_assign_start = time.perf_counter()
     df_out[output_col_name] = selected_outputs
     df_out[collection_col_name] = selected_collections
+    t_assign_done = time.perf_counter()
+    print(f" [utils] column assignment time: {t_assign_done - t_assign_start:.3f}s")
     return df_out
 
 
