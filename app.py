@@ -15,7 +15,6 @@ st.set_page_config(
 def get_genai_client():
     """Initialize and cache the Google GenAI client."""
     
-
     project = "deron-innovations"
     location = "us-central1"
     client = genai.Client(vertexai=True, project=project, location=location)
@@ -31,7 +30,7 @@ def load_collections():
         CHROMA_PATH = "emb_collection"
         
         if not os.path.exists(CHROMA_PATH):
-            st.error(f"❌ ChromaDB path '{CHROMA_PATH}' not found. Please ensure collections are available.")
+            st.error(f"ChromaDB path '{CHROMA_PATH}' not found. Please ensure collections are available.")
             return None, None
         
         client = PersistentClient(path=CHROMA_PATH)
@@ -52,7 +51,7 @@ def load_collections():
             )
             df_intent_collection.drop(columns=['id', 'metadatas'], inplace=True)
         except Exception as e:
-            st.error(f"❌ Failed to load intent_meaning_collection: {e}")
+            st.error(f"Failed to load intent_meaning_collection: {e}")
             return None, None
         
         # Load sample_avg_embeddings_collection
@@ -71,13 +70,13 @@ def load_collections():
             )
             df_avg_embeddings_collection.drop(columns=['id', 'metadatas'], inplace=True)
         except Exception as e:
-            st.error(f"❌ Failed to load sample_avg_embeddings_collection: {e}")
+            st.error(f"Failed to load sample_avg_embeddings_collection: {e}")
             return None, None
         
         return df_intent_collection, df_avg_embeddings_collection
     
     except Exception as e:
-        st.error(f"❌ Error loading collections: {e}")
+        st.error(f"Error loading collections: {e}")
         return None, None
 
 def embed_single_query(input_text, client):
@@ -99,9 +98,9 @@ def warm_up_embeddings(client):
         t0 = time.perf_counter()
         _ = embed_single_query("test query for warming up the API", client)
         t1 = time.perf_counter()
-        print(f"✅ Embeddings warmed up in {t1-t0:.3f}s")
+        print(f"Embeddings warmed up in {t1-t0:.3f}s")
     except Exception as e:
-        print(f"⚠️ Embedding warm-up failed (non-critical): {e}")
+        print(f"Embedding warm-up failed (non-critical): {e}")
 
 def classify_query(query, client, collections):
     """Classify a customer query and return the prediction with details."""
@@ -317,22 +316,22 @@ def main():
                 
                 st.session_state.collections_loaded = True
         except Exception as e:
-            st.error(f"❌ Error loading collections: {e}")
+            st.error(f"Error loading collections: {e}")
             st.session_state.collections_loading = False
     
     # Initialize GenAI client (may take ~1s on first load due to Google SDK imports)
     if st.session_state.client is None:
         try:
-            with st.spinner("🔧 Initializing AI model... (first-time setup)"):
+            with st.spinner("Initializing AI model... (first-time setup)"):
                 st.session_state.client = get_genai_client()
         except Exception as e:
-            st.error(f"❌ Failed to initialize Google GenAI client: {e}")
+            st.error(f"Failed to initialize Google GenAI client: {e}")
             st.info("Please ensure your Google Cloud credentials are properly configured.")
             return
     
     # Warm up embeddings to reduce first-query latency (from ~4.7s to ~0.8s)
     if st.session_state.client is not None and not st.session_state.embeddings_warmed_up:
-        with st.spinner("🔥 Warming up embeddings... (first-time optimization)"):
+        with st.spinner("warming up embeddings"):
             warm_up_embeddings(st.session_state.client)
             st.session_state.embeddings_warmed_up = True
     
@@ -343,7 +342,6 @@ def main():
             with col_load2:
                 st.info("⏳ Loading models in the background... Feel free to type your query!")
     
-
     
     query = st.text_area(
         "Type your query here:",
@@ -550,7 +548,7 @@ def main():
                     print(f"{'='*60}\n")
                     
                 except Exception as e:
-                    st.error(f"❌ {str(e)}")
+                    st.error(f"{str(e)}")
                     st.info("Please try again or contact support if the issue persists.")
 
 if __name__ == "__main__":

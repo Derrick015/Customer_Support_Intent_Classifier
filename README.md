@@ -20,10 +20,10 @@ A sophisticated customer support intent classification system powered by the nov
 
 The system classifies customer queries into four main categories:
 
-- **📦 Cancel Order** - Requests to cancel existing orders
-- **💰 Refund Request** - Requests for refunds or returns
-- **🔧 Technical Issue** - Technical problems or website issues
-- **📍 Track Order** - Inquiries about order status and tracking
+- **Cancel Order** - Requests to cancel existing orders
+- **Refund Request** - Requests for refunds or returns
+- **Technical Issue** - Technical problems or website issues
+- **Track Order** - Inquiries about order status and tracking
 
 ## Quick Start
 
