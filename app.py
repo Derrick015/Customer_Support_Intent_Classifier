@@ -88,19 +88,21 @@ def embed_single_query(input_text, client):
     )
     return [e.values for e in response.embeddings]
 
-def warm_up_embeddings(client):
+def warm_up_application(client, collections):
     """
-    Warm up the embedding API with a dummy call to reduce first-query latency.
+    Warm up the entire application pipeline with a dummy classification call.
+    This includes embedding API and all classification logic to reduce first-query latency.
     First API call often has ~4-5s cold start, subsequent calls are ~0.8s.
     """
     import time
     try:
         t0 = time.perf_counter()
-        _ = embed_single_query("test query for warming up the API", client)
+        # Run a full classification to warm up all components
+        _ = classify_query("test query for warming up the API", client, collections)
         t1 = time.perf_counter()
-        print(f"Embeddings warmed up in {t1-t0:.3f}s")
+        print(f"Application warmed up in {t1-t0:.3f}s")
     except Exception as e:
-        print(f"Embedding warm-up failed (non-critical): {e}")
+        print(f"Application warm-up failed (non-critical): {e}")
 
 def classify_query(query, client, collections):
     """Classify a customer query and return the prediction with details."""
@@ -329,10 +331,12 @@ def main():
             st.info("Please ensure your Google Cloud credentials are properly configured.")
             return
     
-    # Warm up embeddings to reduce first-query latency (from ~4.7s to ~0.8s)
-    if st.session_state.client is not None and not st.session_state.embeddings_warmed_up:
-        with st.spinner("warming up embeddings"):
-            warm_up_embeddings(st.session_state.client)
+    # Warm up application to reduce first-query latency (from ~4.7s to ~0.8s)
+    if (st.session_state.client is not None and 
+        st.session_state.collections_loaded and 
+        not st.session_state.embeddings_warmed_up):
+        with st.spinner("Warming up application..."):
+            warm_up_application(st.session_state.client, st.session_state.collections)
             st.session_state.embeddings_warmed_up = True
     
     # Show subtle loading indicator only if still loading
