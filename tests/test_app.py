@@ -27,9 +27,9 @@ def _stub_process_similarity_single_query(**kwargs):
 def _stub_select_best_output_across_collections(df, collections, criterion, normalization):
     return pd.DataFrame(
         {
-            "selected_output": ["cancel_order"],
+            "selected_output": ["shoes"],
             "selected_collection": ["intent_meaning_collection"],
-            "intent_meaning_collection_top5_output": [["cancel_order", "refund_request"]],
+            "intent_meaning_collection_top5_output": [["shoes", "groceries"]],
         }
     )
 
@@ -74,20 +74,23 @@ def test_classify_query_returns_clean_label(monkeypatch):
     # Stub embedder to avoid external calls
     monkeypatch.setattr(app_module, "embed_single_query", lambda text, client: [[0.1, 0.2, 0.3]])
 
+    # classify_query imports these from src.utils at call time, so patch the module itself
+    utils_module = sys.modules["src.utils"]
+
     # Stub similarity processing (return value unused by our stubbed selector)
-    monkeypatch.setattr(app_module, "process_similarity_single_query", lambda **kwargs: pd.DataFrame())
+    monkeypatch.setattr(utils_module, "process_similarity_single_query", lambda **kwargs: pd.DataFrame())
 
     # Return a one-row DataFrame mimicking selector output
     def fake_select(df, collections, criterion, normalization):
         return pd.DataFrame(
             {
-                "selected_output": ["cancel_order"],
+                "selected_output": ["shoes"],
                 "selected_collection": ["intent_meaning_collection"],
-                "intent_meaning_collection_top5_output": [["cancel_order", "refund_request"]],
+                "intent_meaning_collection_top5_output": [["shoes", "groceries"]],
             }
         )
 
-    monkeypatch.setattr(app_module, "select_best_output_across_collections", fake_select)
+    monkeypatch.setattr(utils_module, "select_best_output_across_collections", fake_select)
 
     # Dummy client object (not used by stubbed embedder logic beyond type presence)
     fake_client = object()
@@ -97,8 +100,40 @@ def test_classify_query_returns_clean_label(monkeypatch):
         {"name": "sample_avg_embeddings_collection", "df": pd.DataFrame(), "output_col": "output", "embedding_col": "embedding", "document_col": "document"},
     ]
 
-    result = app_module.classify_query("I want to cancel my order", fake_client, collections)
-    assert result == "Cancel Order"
+    result = app_module.classify_query("men's leather running sneakers size 10", fake_client, collections)
+    assert result == "Shoes"
+
+
+def test_classify_query_wraps_auth_error(monkeypatch):
+    """When the embedding call fails with an OAuth 'invalid_grant' error
+    (e.g. expired/stale Application Default Credentials), classify_query
+    should catch it and re-raise it wrapped as 'Classification failed: ...',
+    which is exactly what the Streamlit UI displays."""
+    import pytest
+
+    # Simulate the google-auth token exchange failure. The real error is a
+    # google.auth.exceptions.RefreshError whose args mirror this tuple.
+    auth_error = Exception(
+        "invalid_grant: Bad Request",
+        {"error": "invalid_grant", "error_description": "Bad Request"},
+    )
+
+    def _boom(text, client):
+        raise auth_error
+
+    monkeypatch.setattr(app_module, "embed_single_query", _boom)
+
+    fake_client = object()
+    collections = [
+        {"name": "intent_meaning_collection", "df": pd.DataFrame(), "output_col": "output", "embedding_col": "embedding", "document_col": "document"},
+    ]
+
+    with pytest.raises(Exception) as exc_info:
+        app_module.classify_query("some product", fake_client, collections)
+
+    message = str(exc_info.value)
+    assert message.startswith("Classification failed:")
+    assert "invalid_grant" in message
 
 
 def test_embed_single_query_invokes_client_and_returns_values():
@@ -141,7 +176,7 @@ def test_load_collections_happy_path(monkeypatch):
             return {
                 "ids": ["1"],
                 "documents": [f"{self.kind}_doc"],
-                "metadatas": [{"output": "cancel_order"}],
+                "metadatas": [{"output": "shoes"}],
                 "embeddings": [[0.1, 0.2, 0.3]],
             }
 
@@ -149,8 +184,8 @@ def test_load_collections_happy_path(monkeypatch):
         def get_collection(self, name):
             return _FakeCollection(name)
 
-    # Replace Chroma PersistentClient constructor
-    monkeypatch.setattr(app_module, "PersistentClient", lambda path: _FakeClient())
+    # load_collections imports PersistentClient from chromadb at call time
+    monkeypatch.setattr(sys.modules["chromadb"], "PersistentClient", lambda path: _FakeClient())
 
     load_func = getattr(app_module.load_collections, "__wrapped__", app_module.load_collections)
     df_intent, df_sample = load_func()

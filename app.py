@@ -5,8 +5,8 @@ import os
 
 # Page configuration
 st.set_page_config(
-    page_title="Customer Support Intent Classifier",
-    page_icon="🎧",
+    page_title="Product Category Classifier",
+    page_icon="🛒",
     layout="wide"
 )
 
@@ -148,10 +148,10 @@ def classify_query(query, client, collections):
         # Map to clean labels
         t6 = time.perf_counter()
         output_mapping = {
-            'cancel_order': 'Cancel Order',
-            'refund_request': 'Refund Request',
-            'technical_issue': 'Technical Issue',
-            'track_order': 'Track Order'
+            'shoes': 'Shoes',
+            'groceries': 'Groceries',
+            'shirts': 'Shirts',
+            'furniture': 'Furniture'
         }
         
         df_selected['selected_output_clean'] = df_selected['selected_output'].map(output_mapping)
@@ -179,7 +179,7 @@ def classify_query(query, client, collections):
 
 # Main app
 def main():
-    st.title("🎧📦 Customer Support Intent Classifier")
+    st.title("🛒🏷️ Product Category Classifier")
     
     # Message section
     st.markdown("""
@@ -192,11 +192,11 @@ def main():
         box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     ">
         <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #334155;">
-            <strong style="color: #4f46e5;">In this demo,</strong> we classify customer support 
-            queries into one of these intents; <strong>Cancel Order</strong>, 
-            <strong>Refund Request</strong>, <strong>Technical Issue</strong>, and 
-            <strong>Track Order</strong>, to automatically route requests, trigger the right 
-            workflows, and shorten resolution times
+            <strong style="color: #4f46e5;">In this demo,</strong> we classify product names 
+            and descriptions into one of these categories; <strong>Shoes</strong>, 
+            <strong>Groceries</strong>, <strong>Shirts</strong>, and 
+            <strong>Furniture</strong>, to automatically organise catalogues, improve search 
+            and power smarter product recommendations
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -244,7 +244,7 @@ def main():
                 <strong style="color: #ffffff;">Sentiment Analysis</strong>
             </div>
             <div style="padding: 12px; background: linear-gradient(135deg, #b3bbf6 0%, #bd96cf 100%); border-radius: 10px; border-left: 3px solid #b3bbf6;">
-                <strong style="color: #ffffff;">Product Categorisation</strong>
+                <strong style="color: #ffffff;">Customer Support Routing</strong>
             </div>
             <div style="padding: 12px; background: linear-gradient(135deg, #cdd0fa 0%, #d1acd6 100%); border-radius: 10px; border-left: 3px solid #cdd0fa;">
                 <strong style="color: #ffffff;">Many Others</strong>
@@ -266,13 +266,13 @@ def main():
     st.markdown("### Available Categories")
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        st.info("📦 **Cancel Order**")
+        st.info("👟 **Shoes**")
     with col2:
-        st.info("💰 **Refund Request**")
+        st.info("🥦 **Groceries**")
     with col3:
-        st.info("🔧 **Technical Issue**")
+        st.info("👕 **Shirts**")
     with col4:
-        st.info("📍 **Track Order**")
+        st.info("🛋️ **Furniture**")
     
     # st.markdown("---")
     
@@ -348,8 +348,8 @@ def main():
     
     
     query = st.text_area(
-        "Type your query here:",
-        placeholder="e.g., help my order has still not arrived what is going on",
+        "Type a product name or description here:",
+        placeholder="e.g., men's leather running sneakers size 10",
         height=100
     )
     
@@ -403,33 +403,33 @@ def main():
                     
                     # Category-specific styling
                     category_styles = {
-                        'Cancel Order': {
+                        'Shoes': {
                             'gradient': 'linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)',
-                            'icon': '📦',
+                            'icon': '👟',
                             'shadow': 'rgba(255, 107, 107, 0.4)',
                             'accent': '#ff6b6b'
                         },
-                        'Refund Request': {
+                        'Groceries': {
                             'gradient': 'linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%)',
-                            'icon': '💰',
+                            'icon': '🥦',
                             'shadow': 'rgba(78, 205, 196, 0.4)',
                             'accent': '#4ecdc4'
                         },
-                        'Technical Issue': {
+                        'Shirts': {
                             'gradient': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                            'icon': '🔧',
+                            'icon': '👕',
                             'shadow': 'rgba(102, 126, 234, 0.4)',
                             'accent': '#667eea'
                         },
-                        'Track Order': {
+                        'Furniture': {
                             'gradient': 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-                            'icon': '📍',
+                            'icon': '🛋️',
                             'shadow': 'rgba(240, 147, 251, 0.4)',
                             'accent': '#f093fb'
                         }
                     }
                     
-                    style = category_styles.get(prediction, category_styles['Technical Issue'])
+                    style = category_styles.get(prediction, category_styles['Shirts'])
                     t_style_setup = time.perf_counter()
                     print(f" Style setup: {t_style_setup - t_markdown:.3f}s")
                     
