@@ -259,7 +259,6 @@ def main():
         1. Type in your query based on the provided categories
         2. Click the "Classify" button
         3. The app will classify your query into one of the provided categories
-        4. Visualise the confidence distribution of the classification
         """)
 
     # Display available output categories
